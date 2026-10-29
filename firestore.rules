@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation for UserProfile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid'])
+        && data.uid == request.auth.uid
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 150))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('learnedCount' in data) || (data.learnedCount is number && data.learnedCount >= 0))
+        && (!('favoritesCount' in data) || (data.favoritesCount is number && data.favoritesCount >= 0))
+        && (!('updatedAt' in data) || (data.updatedAt is timestamp || data.updatedAt is string));
+    }
+
+    // Validation for LearnedCommand
+    function isValidLearned(data) {
+      return data.keys().hasAll(['commandId'])
+        && data.commandId is string
+        && data.commandId.size() > 0
+        && data.commandId.size() <= 64
+        && (!('learnedAt' in data) || (data.learnedAt is timestamp || data.learnedAt is string));
+    }
+
+    // Validation for FavoriteCommand
+    function isValidFavorite(data) {
+      return data.keys().hasAll(['commandId'])
+        && data.commandId is string
+        && data.commandId.size() > 0
+        && data.commandId.size() <= 64
+        && (!('addedAt' in data) || (data.addedAt is timestamp || data.addedAt is string));
+    }
+
+    // Validation for CommandNote
+    function isValidNote(data) {
+      return data.keys().hasAll(['commandId', 'note'])
+        && data.commandId is string
+        && data.commandId.size() > 0
+        && data.commandId.size() <= 64
+        && data.note is string
+        && data.note.size() <= 5000
+        && (!('updatedAt' in data) || (data.updatedAt is timestamp || data.updatedAt is string));
+    }
+
+    // User profile document
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Disallow searching all users
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Learned commands subcollection
+      match /learned/{commandId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(commandId) && isValidLearned(request.resource.data);
+        allow delete: if isOwner(userId) && isValidId(commandId);
+      }
+
+      // Starred favorites subcollection
+      match /favorites/{commandId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(commandId) && isValidFavorite(request.resource.data);
+        allow delete: if isOwner(userId) && isValidId(commandId);
+      }
+
+      // Command notes subcollection
+      match /notes/{commandId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(commandId) && isValidNote(request.resource.data);
+        allow delete: if isOwner(userId) && isValidId(commandId);
+      }
+    }
+
+    // Connection testing
+    match /test/{docId} {
+      allow read: if true;
+    }
+  }
+}

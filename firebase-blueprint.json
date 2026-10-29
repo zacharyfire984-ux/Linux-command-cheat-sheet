@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and cybersecurity study progress summary.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "photoURL": { "type": "string", "description": "Avatar URL" },
+        "learnedCount": { "type": "number", "description": "Number of commands learned" },
+        "favoritesCount": { "type": "number", "description": "Number of favorited commands" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["uid"]
+    },
+    "LearnedCommand": {
+      "title": "LearnedCommand",
+      "description": "Record of a command marked as learned by the user.",
+      "type": "object",
+      "properties": {
+        "commandId": { "type": "string", "description": "Command ID name (e.g. ls, grep)" },
+        "learnedAt": { "type": "string", "format": "date-time", "description": "Timestamp when learned" }
+      },
+      "required": ["commandId"]
+    },
+    "FavoriteCommand": {
+      "title": "FavoriteCommand",
+      "description": "Record of a command starred by the user.",
+      "type": "object",
+      "properties": {
+        "commandId": { "type": "string", "description": "Command ID name" },
+        "addedAt": { "type": "string", "format": "date-time", "description": "Timestamp when starred" }
+      },
+      "required": ["commandId"]
+    },
+    "CommandNote": {
+      "title": "CommandNote",
+      "description": "User study note or cheat sheet tip for a specific command.",
+      "type": "object",
+      "properties": {
+        "commandId": { "type": "string", "description": "Target command ID" },
+        "note": { "type": "string", "maxLength": 5000, "description": "User notes text" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last edited timestamp" }
+      },
+      "required": ["commandId", "note"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile and aggregate study progress."
+    },
+    "/users/{userId}/learned/{commandId}": {
+      "schema": "LearnedCommand",
+      "description": "Subcollection of commands learned by the user."
+    },
+    "/users/{userId}/favorites/{commandId}": {
+      "schema": "FavoriteCommand",
+      "description": "Subcollection of favorited commands."
+    },
+    "/users/{userId}/notes/{commandId}": {
+      "schema": "CommandNote",
+      "description": "Subcollection of user notes per command."
+    }
+  }
+}

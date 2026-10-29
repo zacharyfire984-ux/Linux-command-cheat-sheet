@@ -1,0 +1,8 @@
+{
+  "name": "Halo Linux Command",
+  "description": "Interactive Linux command reference and cybersecurity cheat sheet with 150+ commands, real examples, safety warnings, and practice exercises.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
